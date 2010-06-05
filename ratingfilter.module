@@ -1,0 +1,79 @@
+<?php
+
+define('RATING_REGEX', "#\[(\d+)(\.5)?/(\d+)\]#");
+
+$basePath = drupal_get_path("module", "ratingfilter") . "/images/";
+$star = '<img src="' . url($basePath . "star.gif", array('absolute' => TRUE)) . '" alt="' . t("Star") . '" />';
+$halfStar = '<img src="' . url($basePath . "half_star.gif", array('absolute' => true)) . '"alt="'. t("Half-star") . '" />';
+$emptyStar = '<img src="' . url($basePath . "empty_star.gif", array('absolute' => true)) . '"alt="' . t("Empty star") . '" />';
+
+function ratingfilter_filter($op, $delta = 0, $format = -1, $text = "") {
+  switch($op) {
+    case "list":
+      return array('Rating Filter');
+    break;
+  
+    case "description":
+      return t("Allows the insertion of graphical ratings (e.g. 4 stars out of 5) for the subject of the node.  Ratings are inserted as [x/y], i.e., x stars out of y.  ");
+    break;
+
+    case "prepare":
+      return ratingfilter_filter_prepare($text);
+    break;
+
+    case "process":
+      return ratingfilter_filter_process($text);
+    break;
+
+    // For dev purposes only
+    case "no cache":
+      return TRUE;
+    break;
+  }
+}
+
+function ratingfilter_filter_tips($delta, $format, $long = false) {
+  if ($long) {
+    return t('Ratings of the form [3.5/5] will be replaced with an image-based representation of the form.');
+  } else {
+    return t('Use [x/y] to display a score.');
+  }
+}
+
+function ratingfilter_filter_prepare($input) {
+  // This method should only do escaping, which isn't required for this simple filter.  
+  return $input;
+}
+
+// Replaces all ratings of the form [x/y] with the appropriate number of stars.
+function ratingfilter_filter_process($input) {
+  $output = $input;
+  while (preg_match(RATING_REGEX, $input, $matches) > 0) {
+    $rating = '<span class="rating">';  
+    $numStars = (int) $matches[1];
+    
+    // Create the numerator stars
+    for ($i = 0; $i < $numStars; $i++) {
+      $rating .= $star;
+    }
+
+    // Add a half star if required, and count this as an extra whole star for the sake of the overall total.
+    if ($matches[2] == ".5") {
+      $rating .= $halfStar;
+      $numStars += 1;
+    }
+
+    // Create the (remaining) denominator stars
+    for ($i = 0; $i < (int)$matches[3] - $numStars; $i++) {
+      $rating .= $emptyStar;
+    }
+    
+    $rating .= "</span>";
+
+    $output = str_replace($matches[0], $rating, $output);
+  }
+  
+  return $output;
+}
+
+?>

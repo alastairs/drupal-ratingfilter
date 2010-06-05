@@ -1,0 +1,6 @@
+; $Id$
+name = "Rating Filter"
+description = "Provides a filter to convert ratings of the form &quot;[3/5]&quot; to an image-based visualisation of the rating."
+package = "Filters"
+core = 6.x
+
